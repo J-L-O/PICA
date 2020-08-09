@@ -126,7 +126,7 @@ class STDLogger:
 
     @staticmethod
     def erase_lines(n=1):
-        for _ in xrange(n):
+        for _ in range(n):
             sys.stdout.write('\x1b[1A')
             sys.stdout.write('\x1b[2K')
         sys.stdout.flush()
@@ -144,5 +144,5 @@ class STDLogger:
     @staticmethod
     def progress(msg):
         STDLogger.erase()
-        print msg
+        print(msg)
         STDLogger.go_up()

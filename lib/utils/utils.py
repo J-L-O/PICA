@@ -6,7 +6,7 @@
 import os
 import shutil
 from datetime import timedelta
-
+from functools import reduce
 import torch
 
 from ..core.config import Config as cfg
@@ -38,7 +38,7 @@ class AverageMeter(object):
 class ProgressMeter(object):
     """Progress Meter"""
     def __init__(self, *meters, **iters):
-        self.iters = {key:self._get_iter_fmtstr(key, val) for key, val in iters.iteritems()}
+        self.iters = {key:self._get_iter_fmtstr(key, val) for key, val in iters.items()}
         assert reduce(lambda x,y: x and y, map(lambda x:isinstance(x, 
             AverageMeter), meters), True), "All meters should be in type of AverageMeter"
         self.meters = meters
@@ -69,7 +69,7 @@ class TimeProgressMeter(ProgressMeter):
     def show(self, **iters):
         # format iters
         assert len(self.iters) == len(iters), "Number of tracked variables is invalid"
-        entries = map(lambda x:self.iters[x].format(iters[x]), self.iters.keys())
+        entries = list(map(lambda x:self.iters[x].format(iters[x]), self.iters.keys()))
         # format time
         elps_time, est_time = self._estimate(iters[TimeProgressMeter.KEY], self.batch_num, self.batch_time.sum)
         entries.append('Progress: [{}/{}]'.format(elps_time, est_time))

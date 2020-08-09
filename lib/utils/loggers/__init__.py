@@ -3,8 +3,8 @@
 # @Author  : Raymond Wong (jiabo.huang@qmul.ac.uk)
 # @Link    : github.com/Raymond-sci/PICA
 
-from std_logger import STDLogger
-from tfb_logger import TFBLogger
+from .std_logger import STDLogger
+from .tfb_logger import TFBLogger
 
 from ...core.config import Config as cfg
 

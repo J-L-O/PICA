@@ -11,8 +11,8 @@ import traceback
 from prettytable import PrettyTable
 from easydict import EasyDict as ezdict
 
-class _META_(type):
 
+class _META_(type):
     # real argparser instance
     PARSER = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     # parsed arguments
@@ -23,29 +23,30 @@ class _META_(type):
     def require_args(self):
 
         # args for config file
-        _META_.PARSER.add_argument('--cfgs', type=str, nargs='*',
-                            help='config files to load')
+        _META_.PARSER.add_argument('--cfgs', type=str, nargs='*', default=
+        ['/home/xifeng/Workspace/2020/PICA/configs/base.yaml', '/home/xifeng/Workspace/2020/PICA/configs/cifar100.yaml'],
+                                   help='config files to load')
 
     def register_module(self, name, path):
         _META_.MODULES[name] = ezdict(path=path, classes=ezdict())
 
     def register_class(self, module, name, obj):
         assert module in _META_.MODULES.keys(), ('No module '
-            'named [%s] has been registered' % module)
+                                                 'named [%s] has been registered' % module)
         _META_.MODULES[module].classes[name] = obj
 
     def get_class_name(self, module):
         assert module in _META_.MODULES.keys(), ('No module '
-            'named [%s] has been registered' % module)
-        return [name for name,_ in _META_.MODULES[module].classes.iteritems()]
+                                                 'named [%s] has been registered' % module)
+        return [name for name, _ in _META_.MODULES[module].classes.items()]
 
     def get_class(self, module, name=None):
         assert module in _META_.MODULES.keys(), ('No module '
-            'named [%s] has been registered' % module)
+                                                 'named [%s] has been registered' % module)
         if name is None:
-            return [obj for name,obj in _META_.MODULES[module].classes.iteritems()]
+            return [obj for name, obj in _META_.MODULES[module].classes.items()]
         assert name in _META_.MODULES[module].classes.keys(), ('No class named [%s] '
-            'has been registered in module [%s]' % (name, module))
+                                                               'has been registered in module [%s]' % (name, module))
         return _META_.MODULES[module].classes[name]
 
     def parse(self):
@@ -64,7 +65,7 @@ class _META_(type):
 
         # re-update default value for new args
         self.from_files(self.known_args().cfgs)
-                
+
         for module in _META_.MODULES.keys():
             # setup class arguments
             if hasattr(self.known_args(), module):
@@ -107,7 +108,7 @@ class _META_(type):
         setattr(_META_.ARGS, key, val)
 
     def yaml(self):
-        config = {k:v for k,v in sorted(vars(_META_.ARGS).items())}
+        config = {k: v for k, v in sorted(vars(_META_.ARGS).items())}
         return yaml.safe_dump(config, default_flow_style=False)
 
     def __getattr__(self, attr):
@@ -131,5 +132,6 @@ class _META_(type):
             table.add_row([i, k, v[:MAX_WIDTH] + ('...' if len(v) > MAX_WIDTH else ''), default])
         return table.get_string()
 
-class Config(object):
-    __metaclass__ = _META_
+
+class Config(metaclass=_META_):
+    pass

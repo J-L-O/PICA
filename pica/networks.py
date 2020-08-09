@@ -123,6 +123,6 @@ class ResNet34(DefaultModel):
         x = self.layer4(x)
         x = self.layer5(x)
         x = self.avgpool(x)
-        return map(lambda head:head(x), self.heads)
+        return list(map(lambda head:head(x), self.heads))
 
 register('resnet34', ResNet34)

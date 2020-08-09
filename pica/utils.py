@@ -10,6 +10,8 @@ from torch._six import int_classes as _int_classes
 from torch.utils.data.dataset import ConcatDataset as _ConcatDataset_
 from torch.utils.data import Sampler
 from torch.utils.data.sampler import RandomSampler as _RandomSampler_
+from functools import reduce
+
 
 class ConcatDataset(_ConcatDataset_):
     """Dataset as a concatenation of multiple datasets

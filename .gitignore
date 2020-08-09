@@ -2,8 +2,10 @@
 .gitignore
 sftp-config.json
 session/
+sessions/
 .DS_Store
 *.pyc
+.idea/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

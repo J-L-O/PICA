@@ -71,11 +71,11 @@ def main():
     # otrainset: original trainset
     otrainset = [ConcatDataset([datasets.get(split=split, transform=reduced_transform) 
                     for split in train_splits[cfg.dataset][hidx]]) 
-                    for hidx in xrange(len(train_splits[cfg.dataset]))]
+                    for hidx in range(len(train_splits[cfg.dataset]))]
     # ptrainset: perturbed trainset
     ptrainset = [ConcatDataset([datasets.get(split=split, transform=train_transform) 
                     for split in train_splits[cfg.dataset][hidx]]) 
-                    for hidx in xrange(len(train_splits[cfg.dataset]))]
+                    for hidx in range(len(train_splits[cfg.dataset]))]
     # testset
     testset = ConcatDataset([datasets.get(split=split, transform=test_transform) 
                     for split in test_splits[cfg.dataset]])
@@ -86,7 +86,7 @@ def main():
     logger.info('Start to build model')
     net = networks.get()
     criterion = PUILoss(cfg.pica_lamda)
-    optimizer = optimizers.get(params=[val for _, val in net.trainable_parameters().iteritems()])
+    optimizer = optimizers.get(params=[val for _, val in net.trainable_parameters().items()])
     lr_handler = lr_policy.get()
 
     # load session if checkpoint is provided
@@ -168,7 +168,7 @@ def train_head(epoch, net, hidx, head, otrainset, ptrainset, optimizer, criterio
     progress = TimeProgressMeter(batch_time, data_time, train_loss, 
             Batch=len(oloader), Head=len(cfg.net_heads), Epoch=cfg.max_epochs)
 
-    for batch_idx, (obatch, pbatch) in enumerate(itertools.izip(oloader, ploader)):
+    for batch_idx, (obatch, pbatch) in enumerate(zip(oloader, ploader)):
         # record data loading time
         data_time.update(time.time() - end)
 
@@ -221,7 +221,7 @@ def evaluate(net, loader):
     # compute accuracy
     num_classes = labels.max().item() + 1
     count_matrix = np.zeros((num_classes, num_classes), dtype=np.int32)
-    for i in xrange(predicts.shape[0]):
+    for i in range(predicts.shape[0]):
         count_matrix[predicts[i], labels[i]] += 1
     reassignment = np.dstack(linear_sum_assignment(count_matrix.max() - count_matrix))[0]
     acc = count_matrix[reassignment[:,0], reassignment[:,1]].sum().astype(np.float32) / predicts.shape[0]
@@ -230,3 +230,5 @@ def evaluate(net, loader):
 
 if __name__ == '__main__':
     Session(__name__).run()
+
+

@@ -51,7 +51,7 @@ class Session:
                             help='print log with priority higher than debug')
         cfg.add_argument('--debug', action='store_true',
                             help='no generated files will be stored')
-        cfg.add_argument('--gpus', default='', type=str,
+        cfg.add_argument('--gpus', default='0', type=str,
                             help='available gpu list, leave empty to use cpu')
         cfg.add_argument('--resume', default=None, type=str,
                             help='path to resume session')
