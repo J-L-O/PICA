@@ -1,0 +1,12 @@
+--find-links https://download.pytorch.org/whl/torch_stable.html
+torch==1.7.0
+torchvision===0.8.1
+torchaudio===0.7.0
+tensorboardX
+numpy==1.19.3
+scipy
+scikit-learn
+pillow
+pyyaml
+prettytable
+easydict
