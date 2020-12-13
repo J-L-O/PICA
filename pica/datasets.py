@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # @Author  : Raymond Huang (jiabo.huang@qmul.ac.uk)
 # @Link    : github.com/Raymond-sci/PICA
-
+import torchvision
 from PIL import Image
 import os
 import os.path
@@ -143,4 +143,13 @@ class STL10(datasets.STL10):
     def extra_repr(self):
         return "Split: {split}".format(**self.__dict__)
 
+
 register('stl10', STL10)
+
+
+class IMPACT_KB(torchvision.datasets.ImageFolder):
+    def __init__(self, root, split, transform=None, target_transform=None):
+        super().__init__(os.path.join(root, split), transform, target_transform)
+
+
+register('impact_kb', IMPACT_KB)

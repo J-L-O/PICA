@@ -63,9 +63,9 @@ def main():
                                                 cfg.tfm_means, cfg.tfm_stds)
     # get datasets
     # each head should have its own trainset
-    train_splits = dict(cifar100=[['train', 'test']],
+    train_splits = dict(cifar100=[['train', 'test']], impact_kb=[['train', 'test']],
         stl10=[['train+unlabeled', 'test'], ['train', 'test']])
-    test_splits = dict(cifar100=['train', 'test'],
+    test_splits = dict(cifar100=['train', 'test'], impact_kb=['train', 'test'],
         stl10=['train', 'test'])
     # instance dataset for each head
     # otrainset: original trainset
