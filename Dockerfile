@@ -1,4 +1,5 @@
 FROM pytorch/pytorch:1.7.0-cuda11.0-cudnn8-devel
 COPY . /pica
-RUN pip install -r /pica/requirements.txt
-CMD python /pica/main.py --cfgs /pica/configs/base.yaml /pica/configs/impact_kb.yaml
+WORKDIR /pica
+RUN pip install -r requirements.txt
+CMD python main.py --cfgs ./configs/base.yaml ./configs/impact_kb.yaml
