@@ -5,7 +5,7 @@
 # args for training
 log_file: True
 log_tfb: True
-display_freq: 1
+display_freq: 10
 
 # args for network
 network: resnet34
@@ -27,7 +27,7 @@ optimizer: adam
 optim_weight_decay: 0.
 
 # args for loader
-num_workers: 4
+num_workers: 0
 batch_size: 256
 
 # args for session
