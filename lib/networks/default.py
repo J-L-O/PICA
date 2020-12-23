@@ -12,6 +12,7 @@ import torch.nn as nn
 
 from ..utils.loggers import STDLogger as logger
 
+
 class DefaultModel(nn.Module):
 
     def _initialise_weights_(self):
@@ -50,11 +51,11 @@ class DefaultModel(nn.Module):
 
     def load_state_dict(self, state_dict):
         # ignore data parallel
-        state_dict = {key.replace('module.', ''):val for key,val in state_dict.iteritems()}
+        state_dict = {key.replace('module.', ''):val for key,val in state_dict.items()}
         # get valid params
         target = self.state_dict()
         cnt = 0
-        for key, val in state_dict.iteritems():
+        for key, val in state_dict.items():
             if key not in target:
                 logger.warn('Ignoring pretrained weights [%s]: not found' % key)
             elif val.shape != target[key].shape:
@@ -74,7 +75,7 @@ class DefaultModel(nn.Module):
 
     def freeze_scope(self, scope):
         params = self.scoped_parameters(scope)
-        for name, param in params.iteritems():
+        for name, param in params.items():
             param.requires_grad = False
 
     def frozen_parameters(self):
@@ -108,5 +109,3 @@ class Flatten(nn.Module):
 
     def forward(self, x):
         return x.view(x.size(0), -1)
-
-    
