@@ -152,10 +152,10 @@ def train_head(epoch, net, hidx, head, otrainset, ptrainset, optimizer, criterio
     random_sampler = RandomSampler(otrainset)
     batch_sampler = RepeatSampler(random_sampler, cfg.batch_size, nrepeat=cfg.data_nrepeat)
     ploader = DataLoader(ptrainset, batch_sampler=batch_sampler, 
-                        num_workers=cfg.num_workers, pin_memory=False)
+                        num_workers=cfg.num_workers, pin_memory=True)
     oloader = DataLoader(otrainset, sampler=random_sampler, 
                         batch_size=cfg.batch_size, num_workers=cfg.num_workers, 
-                        pin_memory=False)
+                        pin_memory=True)
     
     # set network mode
     net.train()
