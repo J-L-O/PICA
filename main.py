@@ -7,18 +7,21 @@ import os
 import sys
 sys.path.append('..')
 import time
+import itertools
 import numpy as np
 from scipy.optimize import linear_sum_assignment
 from sklearn.metrics import normalized_mutual_info_score as NMI
 from sklearn.metrics import adjusted_rand_score as ARI
 
 import torch
-from multiprocessing import set_start_method
+import torch.nn as nn
+import torch.nn.functional as F
+import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
 
 from lib import Config as cfg, networks, datasets, Session
 from lib.utils import (lr_policy, optimizers, transforms, save_checkpoint, 
-                            AverageMeter, TimeProgressMeter)
+                            AverageMeter, TimeProgressMeter, traverse)
 from lib.utils.loggers import STDLogger as logger, TFBLogger as SummaryWriter
 
 from pica.utils import ConcatDataset, RepeatSampler, RandomSampler, get_reduced_transform
@@ -226,7 +229,6 @@ def evaluate(net, loader):
 
 
 if __name__ == '__main__':
-    set_start_method('spawn')
     Session(__name__).run()
 
 
