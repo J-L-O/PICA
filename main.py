@@ -14,7 +14,6 @@ from sklearn.metrics import adjusted_rand_score as ARI
 
 import torch
 from multiprocessing import set_start_method
-set_start_method('spawn')
 from torch.utils.data import DataLoader
 
 from lib import Config as cfg, networks, datasets, Session
@@ -227,6 +226,7 @@ def evaluate(net, loader):
 
 
 if __name__ == '__main__':
+    set_start_method('spawn')
     Session(__name__).run()
 
 
