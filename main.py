@@ -174,8 +174,8 @@ def train_head(epoch, net, hidx, head, otrainset, ptrainset, optimizer, criterio
 
         # move data to target device
         (oinputs, _), (pinputs, _) = (obatch, pbatch)
-        oinputs, pinputs = (oinputs.to(cfg.device, non_blocking=True), 
-                            pinputs.to(cfg.device, non_blocking=True))
+        oinputs, pinputs = (oinputs.to(cfg.device, non_blocking=False),
+                            pinputs.to(cfg.device, non_blocking=False))
 
         # forward
         ologits, plogits = net(oinputs)[hidx], net(pinputs)[hidx]
@@ -207,7 +207,7 @@ def evaluate(net, loader):
     with torch.no_grad():
         for batch_idx, (inputs, targets) in enumerate(loader):
             logger.progress('processing %d/%d batch' % (batch_idx, len(loader)))
-            inputs = inputs.to(cfg.device, non_blocking=True)
+            inputs = inputs.to(cfg.device, non_blocking=False)
             # assuming the last head is the main one
             # output dimension of the last head 
             # should be consistent with the ground-truth
