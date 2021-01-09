@@ -107,9 +107,12 @@ class ResNet34(DefaultModel):
     def run(self, x, target=None):
         """Function for getting the outputs of intermediate layers
         """
-        if target is None or target > 5:
+        if target is None or target > 6:
             raise NotImplementedError('Target is expected to be smaller than 6')
-        layers = [self.layer1, self.layer2, self.layer3, self.layer4, self.layer5]
+
+        if self.sobel is not None:
+            x = self.sobel(x)
+        layers = [self.layer1, self.layer2, self.layer3, self.layer4, self.layer5, self.avgpool]
         for layer in layers[:target]:
             x = layer(x)
         return x

@@ -5,12 +5,17 @@
 
 import os
 import sys
+import io
+
+from sklearn.manifold import TSNE
+import matplotlib.pyplot as plt
+
 sys.path.append('..')
 import time
 import itertools
 import numpy as np
 from scipy.optimize import linear_sum_assignment
-from sklearn.metrics import normalized_mutual_info_score as NMI
+from sklearn.metrics import normalized_mutual_info_score as NMI, f1_score
 from sklearn.metrics import adjusted_rand_score as ARI
 
 import torch
@@ -115,12 +120,17 @@ def main():
         train(epoch, net, otrainset, ptrainset, optimizer, criterion, writer)
 
         logger.info('Start to evaluate after %d epoch of training' % epoch)
-        acc, nmi, ari = evaluate(net, test_loader)
+        acc, nmi, ari, f1, plot = evaluate(net, test_loader)
         logger.info('Evaluation results at epoch %d are: '
             'ACC: %.3f, NMI: %.3f, ARI: %.3f' % (epoch, acc, nmi, ari))
         writer.add_scalar('Evaluate/ACC', acc, epoch)
         writer.add_scalar('Evaluate/NMI', nmi, epoch)
         writer.add_scalar('Evaluate/ARI', ari, epoch)
+
+        for i in range(len(f1)):
+            writer.add_scalar(f'Evaluate/f1_{i}', f1[i], epoch)
+
+        writer.add_figure(f'Evaluate/tsne', plot, epoch)
 
         epoch += 1
 
@@ -204,6 +214,8 @@ def evaluate(net, loader):
     net.eval()
     predicts = np.zeros(len(loader.dataset), dtype=np.int32)
     labels = np.zeros(len(loader.dataset), dtype=np.int32)
+    intermediates = np.zeros((len(loader.dataset), 512), dtype=np.int32)
+
     with torch.no_grad():
         for batch_idx, (inputs, targets) in enumerate(loader):
             logger.progress('processing %d/%d batch' % (batch_idx, len(loader)))
@@ -217,6 +229,7 @@ def evaluate(net, loader):
             end = min(end, len(loader.dataset))
             labels[start:end] = targets.cpu().numpy()
             predicts[start:end] = logits.max(1)[1].cpu().numpy()
+            intermediates[start:end] = net.run(inputs, 6).cpu().numpy()
 
     # compute accuracy
     num_classes = labels.max().item() + 1
@@ -224,8 +237,19 @@ def evaluate(net, loader):
     for i in range(predicts.shape[0]):
         count_matrix[predicts[i], labels[i]] += 1
     reassignment = np.dstack(linear_sum_assignment(count_matrix.max() - count_matrix))[0]
-    acc = count_matrix[reassignment[:,0], reassignment[:,1]].sum().astype(np.float32) / predicts.shape[0]
-    return acc, NMI(labels, predicts), ARI(labels, predicts)
+    acc = count_matrix[reassignment[:, 0], reassignment[:, 1]].sum().astype(np.float32) / predicts.shape[0]
+
+    # compute f1 scores per class
+    predicts_reassigned = reassignment[predicts, 1]
+    f1 = f1_score(labels, predicts_reassigned, average=None)
+
+    # compute t-SNE clustering
+    clustering = TSNE(n_components=2).fit_transform(intermediates)
+    fig = plt.figure()
+    fig.add_subplot(111)
+    plt.scatter(clustering[:, 0], clustering[:, 1], c=labels)
+
+    return acc, NMI(labels, predicts), ARI(labels, predicts), f1, fig
 
 
 if __name__ == '__main__':

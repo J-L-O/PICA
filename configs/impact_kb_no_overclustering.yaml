@@ -5,7 +5,6 @@
 # args for network
 net_avgpool_size: 7
 net_heads:
-  - 12
   - 4
 
 # args for dataset and dataloader
