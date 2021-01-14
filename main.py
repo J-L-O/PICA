@@ -244,7 +244,7 @@ def evaluate(net, loader):
     f1 = f1_score(labels, predicts_reassigned, average=None)
 
     # compute t-SNE clustering
-    clustering = TSNE(n_components=2).fit_transform(intermediates)
+    clustering = TSNE(n_components=2, n_jobs=-1).fit_transform(intermediates)
     fig = plt.figure()
     fig.add_subplot(111)
     plt.scatter(clustering[:, 0], clustering[:, 1], c=labels)
