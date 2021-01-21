@@ -70,7 +70,7 @@ class ResNet34Large(DefaultModel):
         self.inplanes = 64
         self.layer1 = nn.Sequential(nn.Conv2d(2 if sobel else cin, 64,
                     kernel_size=7, stride=2, padding=3, bias=False),
-                    # nn.BatchNorm2d(64, track_running_stats=True),
+                    nn.BatchNorm2d(64, track_running_stats=True),
                     nn.ReLU(inplace=True),
                     nn.MaxPool2d(kernel_size=3, stride=2, padding=1))
         self.layer2 = self._make_layer(BasicBlock, 64, 3)
