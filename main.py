@@ -5,23 +5,15 @@
 
 import os
 import sys
-import io
-
-from sklearn.manifold import TSNE
-import matplotlib.pyplot as plt
 
 sys.path.append('..')
 import time
-import itertools
 import numpy as np
 from scipy.optimize import linear_sum_assignment
 from sklearn.metrics import normalized_mutual_info_score as NMI, f1_score, recall_score, precision_score
 from sklearn.metrics import adjusted_rand_score as ARI
 
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
 
 from lib import Config as cfg, networks, datasets, Session
@@ -82,7 +74,7 @@ def main():
                     for split in train_splits[cfg.dataset][hidx]]) 
                     for hidx in range(len(train_splits[cfg.dataset]))]
     # testset
-    testset = ConcatDataset([datasets.get(split=split, transform=test_transform) 
+    testset = ConcatDataset([datasets.get(split=split, transform=test_transform)
                     for split in test_splits[cfg.dataset]])
     # declare data loaders for testset only
     test_loader = DataLoader(testset, batch_size=cfg.batch_size, shuffle=False, 
@@ -111,6 +103,21 @@ def main():
     # start training
     lr = cfg.base_lr
     epoch = start_epoch
+
+    logger.info('Start to evaluate after %d epoch of training' % epoch)
+    acc = evaluate(net, test_loader, writer, epoch)
+
+    epoch += 1
+
+    if not cfg.debug:
+        # save checkpoint
+        is_best = acc > best_acc
+        best_acc = max(best_acc, acc)
+        save_checkpoint({'net': net.state_dict(),
+                         'optimizer': optimizer.state_dict(),
+                         'acc': acc,
+                         'epoch': epoch}, is_best=is_best)
+
     while lr > 0 and epoch < cfg.max_epochs:
 
         lr = lr_handler.update(epoch, optimizer)
@@ -119,22 +126,10 @@ def main():
         logger.info('Start to train at %d epoch with learning rate %.5f' % (epoch, lr))
         train(epoch, net, otrainset, ptrainset, optimizer, criterion, writer)
 
-        logger.info('Start to evaluate after %d epoch of training' % epoch)
-        acc, nmi, ari, precision, recall, f1, plot = evaluate(net, test_loader)
-        logger.info('Evaluation results at epoch %d are: '
-            'ACC: %.3f, NMI: %.3f, ARI: %.3f' % (epoch, acc, nmi, ari))
-        writer.add_scalar('Evaluate/ACC', acc, epoch)
-        writer.add_scalar('Evaluate/NMI', nmi, epoch)
-        writer.add_scalar('Evaluate/ARI', ari, epoch)
-
-        for i in range(len(f1)):
-            writer.add_scalar(f'Evaluate/f1_{i}', f1[i], epoch)
-            writer.add_scalar(f'Evaluate/precision_{i}', precision[i], epoch)
-            writer.add_scalar(f'Evaluate/recall_{i}', recall[i], epoch)
-
-        writer.add_figure(f'Evaluate/tsne', plot, epoch)
-
         epoch += 1
+
+        logger.info('Start to evaluate after %d epoch of training' % epoch)
+        acc = evaluate(net, test_loader, writer, epoch)
 
         if cfg.debug:
             continue
@@ -142,7 +137,7 @@ def main():
         # save checkpoint
         is_best = acc > best_acc
         best_acc = max(best_acc, acc)
-        save_checkpoint({'net' : net.state_dict(), 
+        save_checkpoint({'net' : net.state_dict(),
                 'optimizer' : optimizer.state_dict(),
                 'acc' : acc,
                 'epoch' : epoch}, is_best=is_best)
@@ -209,7 +204,7 @@ def train_head(epoch, net, hidx, head, otrainset, ptrainset, optimizer, criterio
 
         logger.info(progress.show(Batch=batch_idx, Epoch=epoch, Head=hidx))
 
-def evaluate(net, loader):
+def evaluate(net, loader, writer, epoch):
     """evaluates on provided data
     """
 
@@ -219,19 +214,19 @@ def evaluate(net, loader):
     intermediates = np.zeros((len(loader.dataset), 512), dtype=np.int32)
 
     with torch.no_grad():
-        for batch_idx, (inputs, targets) in enumerate(loader):
+        for batch_idx, (batch, targets) in enumerate(loader):
             logger.progress('processing %d/%d batch' % (batch_idx, len(loader)))
-            inputs = inputs.to(cfg.device, non_blocking=True)
+            batch = batch.to(cfg.device, non_blocking=True)
             # assuming the last head is the main one
             # output dimension of the last head 
             # should be consistent with the ground-truth
-            logits = net(inputs)[-1]
+            logits = net(batch)[-1]
             start = batch_idx * loader.batch_size
             end = start + loader.batch_size
             end = min(end, len(loader.dataset))
             labels[start:end] = targets.cpu().numpy()
             predicts[start:end] = logits.max(1)[1].cpu().numpy()
-            intermediates[start:end] = net.run(inputs, 6).cpu().numpy()
+            intermediates[start:end] = net.run(batch, 6).cpu().numpy()
 
     # compute accuracy
     num_classes = labels.max().item() + 1
@@ -240,20 +235,30 @@ def evaluate(net, loader):
         count_matrix[predicts[i], labels[i]] += 1
     reassignment = np.dstack(linear_sum_assignment(count_matrix.max() - count_matrix))[0]
     acc = count_matrix[reassignment[:, 0], reassignment[:, 1]].sum().astype(np.float32) / predicts.shape[0]
+    nmi = NMI(labels, predicts)
+    ari = ARI(labels, predicts)
 
     # compute f1 scores per class
     predicts_reassigned = reassignment[predicts, 1]
-    precision = precision_score(labels, predicts_reassigned, average=None)
-    recall = recall_score(labels, predicts_reassigned, average=None)
-    f1 = f1_score(labels, predicts_reassigned, average=None)
+    precision = precision_score(labels, predicts_reassigned, average=None, zero_division=0)
+    recall = recall_score(labels, predicts_reassigned, average=None, zero_division=0)
+    f1 = f1_score(labels, predicts_reassigned, average=None, zero_division=0)
 
-    # compute t-SNE clustering
-    clustering = TSNE(n_components=2, n_jobs=-1).fit_transform(intermediates)
-    fig = plt.figure()
-    fig.add_subplot(111)
-    plt.scatter(clustering[:, 0], clustering[:, 1], c=labels)
+    logger.info('Evaluation results at epoch %d are: '
+                'ACC: %.3f, NMI: %.3f, ARI: %.3f' % (epoch, acc, nmi, ari))
+    writer.add_scalar('Evaluate/ACC', acc, epoch)
+    writer.add_scalar('Evaluate/NMI', nmi, epoch)
+    writer.add_scalar('Evaluate/ARI', ari, epoch)
 
-    return acc, NMI(labels, predicts), ARI(labels, predicts), precision, recall, f1, fig
+    for i in range(len(f1)):
+        writer.add_scalar(f'Evaluate/f1_{i}', f1[i], epoch)
+        writer.add_scalar(f'Evaluate/precision_{i}', precision[i], epoch)
+        writer.add_scalar(f'Evaluate/recall_{i}', recall[i], epoch)
+
+    if epoch % cfg.display_freq == 0:
+        writer.add_embedding(intermediates, labels, None, epoch, cfg.session)
+
+    return acc
 
 
 if __name__ == '__main__':

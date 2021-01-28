@@ -5,7 +5,7 @@
 # args for training
 log_file: True
 log_tfb: True
-display_freq: 10
+display_freq: 20
 
 # args for network
 network: resnet34
