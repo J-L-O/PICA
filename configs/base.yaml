@@ -6,6 +6,8 @@
 log_file: True
 log_tfb: True
 display_freq: 20
+embedding_freq: 20
+local_rank: 0
 
 # args for network
 network: resnet34

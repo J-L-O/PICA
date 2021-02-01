@@ -14,6 +14,7 @@ from sklearn.metrics import normalized_mutual_info_score as NMI, f1_score, recal
 from sklearn.metrics import adjusted_rand_score as ARI
 
 import torch
+import torch.distributed as dist
 from torch.utils.data import DataLoader
 
 from lib import Config as cfg, networks, datasets, Session
@@ -31,8 +32,12 @@ def require_args():
                         help='maximal training epoch')
     cfg.add_argument('--display-freq', default=80, type=int,
                         help='log display frequency')
+    cfg.add_argument('--embedding-freq', default=80, type=int,
+                     help='Embedding log frequency')
     cfg.add_argument('--batch-size', default=256, type=int,
-                        help='size of mini-batch')
+                     help='size of mini-batch')
+    cfg.add_argument('--local-rank', default=0, type=int,
+                        help='The local rank in case of multiprocessing')
     cfg.add_argument('--num-workers', default=4, type=int,
                         help='number of workers used for loading data')
     cfg.add_argument('--data-nrepeat', default=1, type=int,
@@ -40,6 +45,20 @@ def require_args():
                              'mini-batch should be repeated')
     cfg.add_argument('--pica-lamda', default=2.0, type=float,
                         help='weight of negative entropy regularisation')
+
+def synchronize():
+    """
+    Helper function to synchronize (barrier) among all processes when
+    using distributed training
+    """
+    if not dist.is_available():
+        return
+    if not dist.is_initialized():
+        return
+    world_size = dist.get_world_size()
+    if world_size == 1:
+        return
+    dist.barrier()
 
 def main():
 
@@ -96,7 +115,23 @@ def main():
         start_epoch = ckpt['epoch']
 
     # move modules to target device
-    net, criterion = net.to(cfg.device), criterion.to(cfg.device)
+    net = net.to(cfg.device)
+    criterion = criterion.to(cfg.device)
+
+    if int(os.environ["WORLD_SIZE"]) > 1:
+        dist.init_process_group(
+            backend="nccl", init_method="env://"
+        )
+    print("world size: {}".format(os.environ["WORLD_SIZE"]))
+    print("rank: {}".format(cfg.local_rank))
+    synchronize()
+
+    criterion = criterion.to(cfg.device)
+
+    if int(os.environ["WORLD_SIZE"]) > 1:
+        net = torch.nn.parallel.DistributedDataParallel(net, device_ids=[cfg.local_rank], output_device=cfg.local_rank).cuda()
+    else:
+        net = net.to(cfg.device)
 
     # tensorboard wrtier
     writer = SummaryWriter(cfg.debug, log_dir=cfg.tfb_dir)
@@ -106,8 +141,6 @@ def main():
 
     logger.info('Start to evaluate after %d epoch of training' % epoch)
     acc = evaluate(net, test_loader, writer, epoch)
-
-    epoch += 1
 
     if not cfg.debug:
         # save checkpoint
@@ -255,7 +288,7 @@ def evaluate(net, loader, writer, epoch):
         writer.add_scalar(f'Evaluate/precision_{i}', precision[i], epoch)
         writer.add_scalar(f'Evaluate/recall_{i}', recall[i], epoch)
 
-    if epoch % cfg.display_freq == 0:
+    if epoch % cfg.embedding_freq == 0:
         writer.add_embedding(intermediates, labels, None, epoch, cfg.session)
 
     return acc
