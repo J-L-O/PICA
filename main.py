@@ -124,11 +124,10 @@ def main():
     synchronize()
 
     criterion = criterion.to(cfg.device)
+    net = net.to(cfg.device)
 
     if int(os.environ["WORLD_SIZE"]) > 1:
         net = torch.nn.parallel.DistributedDataParallel(net, device_ids=[cfg.local_rank], output_device=cfg.local_rank).cuda()
-    else:
-        net = net.to(cfg.device)
 
     # tensorboard wrtier
     writer = SummaryWriter(cfg.debug, log_dir=cfg.tfb_dir)
