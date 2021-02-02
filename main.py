@@ -117,7 +117,7 @@ def main():
     # move modules to target device
     if int(os.environ["WORLD_SIZE"]) > 1:
         dist.init_process_group(
-            backend="nccl", init_method="env://"
+            backend="gloo", init_method="env://"
         )
     print("world size: {}".format(os.environ["WORLD_SIZE"]))
     print("rank: {}".format(cfg.local_rank))
