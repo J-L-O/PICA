@@ -27,7 +27,7 @@ class BasicBlock(nn.Module):
 
     self.conv1 = conv3x3(inplanes, planes, stride)
     self.bn1 = nn.BatchNorm2d(planes, track_running_stats=track_running_stats)
-    self.relu = nn.ReLU(inplace=True)
+    self.relu = nn.ReLU(inplace=False)
     self.conv2 = conv3x3(planes, planes)
     self.bn2 = nn.BatchNorm2d(planes, track_running_stats=track_running_stats)
     self.downsample = downsample
@@ -71,7 +71,7 @@ class ResNet34Large(DefaultModel):
         self.layer1 = nn.Sequential(nn.Conv2d(2 if sobel else cin, 64,
                     kernel_size=7, stride=2, padding=3, bias=False),
                     nn.BatchNorm2d(64, track_running_stats=True),
-                    nn.ReLU(inplace=True),
+                    nn.ReLU(inplace=False),
                     nn.MaxPool2d(kernel_size=3, stride=2, padding=1))
         self.layer2 = self._make_layer(BasicBlock, 64, 3)
         self.layer3 = self._make_layer(BasicBlock, 128, 4, stride=2)
