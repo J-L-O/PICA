@@ -61,6 +61,7 @@ def synchronize():
     dist.barrier()
 
 def main():
+    torch.autograd.set_detect_anomaly(True)
 
     logger.info('Start to declare training variable')
     if torch.cuda.is_available():
