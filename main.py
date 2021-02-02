@@ -240,7 +240,7 @@ def evaluate(net, loader, writer, epoch):
     net.eval()
     predicts = np.zeros(len(loader.dataset), dtype=np.int32)
     labels = np.zeros(len(loader.dataset), dtype=np.int32)
-    intermediates = np.zeros((len(loader.dataset), 512), dtype=np.int32)
+    # intermediates = np.zeros((len(loader.dataset), 512), dtype=np.int32)
 
     with torch.no_grad():
         for batch_idx, (batch, targets) in enumerate(loader):
@@ -255,7 +255,7 @@ def evaluate(net, loader, writer, epoch):
             end = min(end, len(loader.dataset))
             labels[start:end] = targets.cpu().numpy()
             predicts[start:end] = logits.max(1)[1].cpu().numpy()
-            intermediates[start:end] = net.run(batch, 6).cpu().numpy()
+            # intermediates[start:end] = net.run(batch, 6).cpu().numpy()
 
     # compute accuracy
     num_classes = labels.max().item() + 1
@@ -284,8 +284,8 @@ def evaluate(net, loader, writer, epoch):
         writer.add_scalar(f'Evaluate/precision_{i}', precision[i], epoch)
         writer.add_scalar(f'Evaluate/recall_{i}', recall[i], epoch)
 
-    if epoch % cfg.embedding_freq == 0:
-        writer.add_embedding(intermediates, labels, None, epoch, cfg.session)
+    # if epoch % cfg.embedding_freq == 0:
+    #     writer.add_embedding(intermediates, labels, None, epoch, cfg.session)
 
     return acc
 
