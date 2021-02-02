@@ -63,7 +63,11 @@ def synchronize():
 def main():
 
     logger.info('Start to declare training variable')
-    cfg.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    if torch.cuda.is_available():
+        cfg.device = torch.device("cuda")
+        torch.cuda.set_device(cfg.local_rank)
+    else:
+        cfg.device = torch.device("cpu")
     logger.info('Session will be ran in device: [%s]' % cfg.device)
     start_epoch = 0
     best_acc = 0.
