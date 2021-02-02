@@ -36,7 +36,7 @@ def require_args():
                      help='Embedding log frequency')
     cfg.add_argument('--batch-size', default=256, type=int,
                      help='size of mini-batch')
-    cfg.add_argument('--local-rank', default=0, type=int,
+    cfg.add_argument('--local_rank', default=0, type=int,
                         help='The local rank in case of multiprocessing')
     cfg.add_argument('--num-workers', default=4, type=int,
                         help='number of workers used for loading data')
@@ -115,9 +115,6 @@ def main():
         start_epoch = ckpt['epoch']
 
     # move modules to target device
-    net = net.to(cfg.device)
-    criterion = criterion.to(cfg.device)
-
     if int(os.environ["WORLD_SIZE"]) > 1:
         dist.init_process_group(
             backend="nccl", init_method="env://"
