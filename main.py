@@ -220,7 +220,15 @@ def train_head(epoch, net, hidx, head, otrainset, ptrainset, optimizer, criterio
                             pinputs.to(cfg.device, non_blocking=True))
 
         # forward
-        ologits, plogits = net(oinputs)[hidx], net(pinputs)[hidx]
+        oout, pout = net(oinputs), net(pinputs)
+
+        # Detach all unused heads
+        for head in range(cfg.net_heads):
+            if head != hidx:
+                oout[head].detach()
+                pout[head].detach()
+
+        ologits, plogits = oout[hidx], pout[hidx]
         loss = criterion(ologits.repeat(cfg.data_nrepeat, 1), plogits)
 
         # backward
