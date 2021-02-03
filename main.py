@@ -223,10 +223,10 @@ def train_head(epoch, net, hidx, head, otrainset, ptrainset, optimizer, criterio
         oout, pout = net(oinputs), net(pinputs)
 
         # Detach all unused heads
-        for head in range(cfg.net_heads):
-            if head != hidx:
-                oout[head].detach()
-                pout[head].detach()
+        for idx, _ in enumerate(cfg.net_heads):
+            if idx != hidx:
+                oout[idx].detach()
+                pout[idx].detach()
 
         ologits, plogits = oout[hidx], pout[hidx]
         loss = criterion(ologits.repeat(cfg.data_nrepeat, 1), plogits)
