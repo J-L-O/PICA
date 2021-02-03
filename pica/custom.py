@@ -114,7 +114,7 @@ class ResNet34Large(DefaultModel):
             x = layer(x)
         return x
 
-    def forward(self, x):
+    def forward(self, x, hidx):
         if self.sobel is not None:
             x = self.sobel(x)
         x = self.layer1(x)
@@ -123,6 +123,6 @@ class ResNet34Large(DefaultModel):
         x = self.layer4(x)
         x = self.layer5(x)
         x = self.avgpool(x)
-        return list(map(lambda head:head(x), self.heads))
+        return self.heads[hidx](x)
 
 register('resnet34large', ResNet34Large)

@@ -220,15 +220,14 @@ def train_head(epoch, net, hidx, head, otrainset, ptrainset, optimizer, criterio
                             pinputs.to(cfg.device, non_blocking=True))
 
         # forward
-        oout, pout = net(oinputs), net(pinputs)
+        ologits, plogits = net(oinputs, hidx), net(pinputs, hidx)
 
         # Detach all unused heads
-        for idx, _ in enumerate(cfg.net_heads):
-            if idx != hidx:
-                oout[idx].detach()
-                pout[idx].detach()
-
-        ologits, plogits = oout[hidx], pout[hidx]
+        # for idx, _ in enumerate(cfg.net_heads):
+        #     if idx != hidx:
+        #         oout[idx].detach()
+        #         pout[idx].detach()
+        # ologits, plogits = oout[hidx], pout[hidx]
         loss = criterion(ologits.repeat(cfg.data_nrepeat, 1), plogits)
 
         # backward
@@ -263,7 +262,7 @@ def evaluate(net, loader, writer, epoch):
             # assuming the last head is the main one
             # output dimension of the last head 
             # should be consistent with the ground-truth
-            logits = net(batch)[-1]
+            logits = net(batch, -1)
             start = batch_idx * loader.batch_size
             end = start + loader.batch_size
             end = min(end, len(loader.dataset))
