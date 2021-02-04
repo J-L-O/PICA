@@ -135,7 +135,7 @@ def main():
         net = torch.nn.parallel.DistributedDataParallel(net, device_ids=[cfg.local_rank],
                                                         output_device=cfg.local_rank, broadcast_buffers=False).cuda()
 
-    # tensorboard wrtier
+    # tensorboard writer
     writer = SummaryWriter(cfg.debug, log_dir=cfg.tfb_dir)
     # start training
     lr = cfg.base_lr
