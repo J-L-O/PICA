@@ -132,8 +132,8 @@ def main():
     net = net.to(cfg.device)
 
     if int(os.environ["WORLD_SIZE"]) > 1:
-        net = torch.nn.parallel.DistributedDataParallel(net, device_ids=[cfg.local_rank], find_unused_parameters=True,
-                                                        output_device=cfg.local_rank, broadcast_buffers=False).cuda()
+        net = torch.nn.parallel.DistributedDataParallel(net, device_ids=[cfg.local_rank]
+                                                        output_device=cfg.local_rank).cuda()
 
     # tensorboard wrtier
     writer = SummaryWriter(cfg.debug, log_dir=cfg.tfb_dir)
