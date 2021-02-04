@@ -144,7 +144,7 @@ def main():
     logger.info('Start to evaluate after %d epoch of training' % epoch)
     acc = evaluate(net, test_loader, writer, epoch)
 
-    if not cfg.debug:
+    if not cfg.debug and cfg.local_rank == 0:
         # save checkpoint
         is_best = acc > best_acc
         best_acc = max(best_acc, acc)
@@ -166,7 +166,7 @@ def main():
         logger.info('Start to evaluate after %d epoch of training' % epoch)
         acc = evaluate(net, test_loader, writer, epoch)
 
-        if cfg.debug:
+        if cfg.debug or cfg.local_rank != 0:
             continue
 
         # save checkpoint
@@ -221,13 +221,6 @@ def train_head(epoch, net, hidx, head, otrainset, ptrainset, optimizer, criterio
 
         # forward
         ologits, plogits = net(oinputs, hidx), net(pinputs, hidx)
-
-        # Detach all unused heads
-        # for idx, _ in enumerate(cfg.net_heads):
-        #     if idx != hidx:
-        #         oout[idx].detach()
-        #         pout[idx].detach()
-        # ologits, plogits = oout[hidx], pout[hidx]
         loss = criterion(ologits.repeat(cfg.data_nrepeat, 1), plogits)
 
         # backward
@@ -239,7 +232,8 @@ def train_head(epoch, net, hidx, head, otrainset, ptrainset, optimizer, criterio
         batch_time.update(time.time() - end)
         end = time.time()
 
-        writer.add_scalar('Train/Loss/Head-%d' % head, train_loss.val, epoch * len(oloader) + batch_idx)
+        if cfg.local_rank == 0:
+            writer.add_scalar('Train/Loss/Head-%d' % head, train_loss.val, epoch * len(oloader) + batch_idx)
 
         if batch_idx % cfg.display_freq != 0:
             continue
@@ -253,7 +247,7 @@ def evaluate(net, loader, writer, epoch):
     net.eval()
     predicts = np.zeros(len(loader.dataset), dtype=np.int32)
     labels = np.zeros(len(loader.dataset), dtype=np.int32)
-    # intermediates = np.zeros((len(loader.dataset), 512), dtype=np.int32)
+    intermediates = np.zeros((len(loader.dataset), 512), dtype=np.int32)
 
     with torch.no_grad():
         for batch_idx, (batch, targets) in enumerate(loader):
@@ -268,7 +262,7 @@ def evaluate(net, loader, writer, epoch):
             end = min(end, len(loader.dataset))
             labels[start:end] = targets.cpu().numpy()
             predicts[start:end] = logits.max(1)[1].cpu().numpy()
-            # intermediates[start:end] = net.run(batch, 6).cpu().numpy()
+            intermediates[start:end] = net(batch, -1, 6).cpu().numpy()
 
     # compute accuracy
     num_classes = labels.max().item() + 1
@@ -288,17 +282,18 @@ def evaluate(net, loader, writer, epoch):
 
     logger.info('Evaluation results at epoch %d are: '
                 'ACC: %.3f, NMI: %.3f, ARI: %.3f' % (epoch, acc, nmi, ari))
-    writer.add_scalar('Evaluate/ACC', acc, epoch)
-    writer.add_scalar('Evaluate/NMI', nmi, epoch)
-    writer.add_scalar('Evaluate/ARI', ari, epoch)
+    if cfg.local_rank == 0:
+        writer.add_scalar('Evaluate/ACC', acc, epoch)
+        writer.add_scalar('Evaluate/NMI', nmi, epoch)
+        writer.add_scalar('Evaluate/ARI', ari, epoch)
 
-    for i in range(len(f1)):
-        writer.add_scalar(f'Evaluate/f1_{i}', f1[i], epoch)
-        writer.add_scalar(f'Evaluate/precision_{i}', precision[i], epoch)
-        writer.add_scalar(f'Evaluate/recall_{i}', recall[i], epoch)
+        for i in range(len(f1)):
+            writer.add_scalar(f'Evaluate/f1_{i}', f1[i], epoch)
+            writer.add_scalar(f'Evaluate/precision_{i}', precision[i], epoch)
+            writer.add_scalar(f'Evaluate/recall_{i}', recall[i], epoch)
 
-    # if epoch % cfg.embedding_freq == 0:
-    #     writer.add_embedding(intermediates, labels, None, epoch, cfg.session)
+        if epoch % cfg.embedding_freq == 0:
+            writer.add_embedding(intermediates, labels, None, epoch, cfg.session)
 
     return acc
 

@@ -101,28 +101,15 @@ class ResNet34Large(DefaultModel):
 
         return nn.Sequential(*layers)
 
-    def run(self, x, target=None):
-        """Function for getting the outputs of intermediate layers
-        """
-        if target is None or target > 6:
-            raise NotImplementedError('Target is expected to be smaller than 6')
+    def forward(self, x, hidx, target=7):
+        if target is None or target > 7:
+            raise NotImplementedError('Target is expected to be smaller than 7')
 
         if self.sobel is not None:
             x = self.sobel(x)
-        layers = [self.layer1, self.layer2, self.layer3, self.layer4, self.layer5, self.avgpool]
+        layers = [self.layer1, self.layer2, self.layer3, self.layer4, self.layer5, self.avgpool, self.heads[hidx]]
         for layer in layers[:target]:
             x = layer(x)
         return x
-
-    def forward(self, x, hidx):
-        if self.sobel is not None:
-            x = self.sobel(x)
-        x = self.layer1(x)
-        x = self.layer2(x)
-        x = self.layer3(x)
-        x = self.layer4(x)
-        x = self.layer5(x)
-        x = self.avgpool(x)
-        return self.heads[hidx](x)
 
 register('resnet34large', ResNet34Large)
