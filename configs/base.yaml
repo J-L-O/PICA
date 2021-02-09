@@ -29,7 +29,7 @@ optimizer: adam
 optim_weight_decay: 0.
 
 # args for loader
-num_workers: 4
+num_workers: 0
 batch_size: 256
 
 # args for session

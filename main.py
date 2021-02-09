@@ -19,7 +19,7 @@ from torch.utils.data import DataLoader
 
 from lib import Config as cfg, networks, datasets, Session
 from lib.utils import (lr_policy, optimizers, transforms, save_checkpoint, 
-                            AverageMeter, TimeProgressMeter, traverse)
+                            AverageMeter, TimeProgressMeter)
 from lib.utils.loggers import STDLogger as logger, TFBLogger as SummaryWriter
 
 from pica.utils import ConcatDataset, RepeatSampler, RandomSampler, get_reduced_transform
@@ -135,8 +135,13 @@ def main():
         net = torch.nn.parallel.DistributedDataParallel(net, device_ids=[cfg.local_rank], find_unused_parameters=True,
                                                         output_device=cfg.local_rank, broadcast_buffers=False).cuda()
 
-    # tensorboard writer
-    writer = SummaryWriter(cfg.debug, log_dir=cfg.tfb_dir)
+    # Only rank 0 needs a SummaryWriter
+    if cfg.local_rank == 0:
+        # tensorboard writer
+        writer = SummaryWriter(cfg.debug, log_dir=cfg.tfb_dir)
+    else:
+        writer = None
+
     # start training
     lr = cfg.base_lr
     epoch = start_epoch
@@ -156,7 +161,6 @@ def main():
     while lr > 0 and epoch < cfg.max_epochs:
 
         lr = lr_handler.update(epoch, optimizer)
-        writer.add_scalar('Train/Learing_Rate', lr, epoch)
 
         logger.info('Start to train at %d epoch with learning rate %.5f' % (epoch, lr))
         train(epoch, net, otrainset, ptrainset, optimizer, criterion, writer)
@@ -166,16 +170,15 @@ def main():
         logger.info('Start to evaluate after %d epoch of training' % epoch)
         acc = evaluate(net, test_loader, writer, epoch)
 
-        if cfg.debug or cfg.local_rank != 0:
-            continue
-
-        # save checkpoint
-        is_best = acc > best_acc
-        best_acc = max(best_acc, acc)
-        save_checkpoint({'net' : net.state_dict(),
-                'optimizer' : optimizer.state_dict(),
-                'acc' : acc,
-                'epoch' : epoch}, is_best=is_best)
+        if not cfg.debug and cfg.local_rank == 0:
+            writer.add_scalar('Train/Learing_Rate', lr, epoch)
+            # save checkpoint
+            is_best = acc > best_acc
+            best_acc = max(best_acc, acc)
+            save_checkpoint({'net' : net.state_dict(),
+                    'optimizer' : optimizer.state_dict(),
+                    'acc' : acc,
+                    'epoch' : epoch}, is_best=is_best)
 
     logger.info('Done')
 
@@ -247,7 +250,8 @@ def evaluate(net, loader, writer, epoch):
     net.eval()
     predicts = np.zeros(len(loader.dataset), dtype=np.int32)
     labels = np.zeros(len(loader.dataset), dtype=np.int32)
-    intermediates = np.zeros((len(loader.dataset), 512), dtype=np.int32)
+    intermediates = np.zeros((len(loader.dataset), 512), dtype=np.float32)
+    images = np.zeros((len(loader.dataset), 3, 64, 64), dtype=np.float32)
 
     with torch.no_grad():
         for batch_idx, (batch, targets) in enumerate(loader):
@@ -263,7 +267,9 @@ def evaluate(net, loader, writer, epoch):
             labels[start:end] = targets.cpu().numpy()
             predicts[start:end] = logits.max(1)[1].cpu().numpy()
             intermediates[start:end] = net(batch, -1, 6).cpu().numpy()
+            images[start:end] = torch.nn.functional.interpolate(batch, size=(64, 64), mode='bicubic', align_corners=False).cpu().numpy()
 
+    # TODO: Gather labels and predicts
     # compute accuracy
     num_classes = labels.max().item() + 1
     count_matrix = np.zeros((num_classes, num_classes), dtype=np.int32)
@@ -293,7 +299,7 @@ def evaluate(net, loader, writer, epoch):
             writer.add_scalar(f'Evaluate/recall_{i}', recall[i], epoch)
 
         if epoch % cfg.embedding_freq == 0:
-            writer.add_embedding(intermediates, labels, None, epoch, cfg.session)
+            writer.add_embedding(intermediates, labels, images, epoch, cfg.session)
 
     return acc
 
