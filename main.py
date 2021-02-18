@@ -15,7 +15,7 @@ from sklearn.metrics import adjusted_rand_score as ARI
 
 import torch
 import torch.distributed as dist
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, DistributedSampler
 
 from lib import Config as cfg, networks, datasets, Session
 from lib.utils import (lr_policy, optimizers, transforms, save_checkpoint, 
@@ -192,10 +192,16 @@ def train(epoch, net, otrainset, ptrainset, optimizer, criterion, writer):
 def train_head(epoch, net, hidx, head, otrainset, ptrainset, optimizer, criterion, writer):
     """trains one head for an epoch
     """
+    world_size = int(os.environ["WORLD_SIZE"])
 
     # declare dataloader
-    random_sampler = RandomSampler(otrainset)
-    batch_sampler = RepeatSampler(random_sampler, cfg.batch_size, nrepeat=cfg.data_nrepeat)
+    if world_size > 1:
+        random_sampler = DistributedSampler(dataset=otrainset, num_replicas=world_size, rank=cfg.local_rank)
+        batch_sampler = RepeatSampler(random_sampler, cfg.batch_size, nrepeat=cfg.data_nrepeat)
+    else:
+        random_sampler = RandomSampler(otrainset)
+        batch_sampler = RepeatSampler(random_sampler, cfg.batch_size, nrepeat=cfg.data_nrepeat)
+
     ploader = DataLoader(ptrainset, batch_sampler=batch_sampler, 
                         num_workers=cfg.num_workers, pin_memory=True)
     oloader = DataLoader(otrainset, sampler=random_sampler, 
