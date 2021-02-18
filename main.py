@@ -253,6 +253,8 @@ def evaluate(net, loader, writer, epoch):
     intermediates = np.zeros((len(loader.dataset), 512), dtype=np.float32)
     images = np.zeros((len(loader.dataset), 3, 64, 64), dtype=np.float32)
 
+    print(f"Evaluating on {len(loader.dataset)} samples")
+
     with torch.no_grad():
         for batch_idx, (batch, targets) in enumerate(loader):
             logger.progress('processing %d/%d batch' % (batch_idx, len(loader)))
