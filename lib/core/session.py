@@ -116,7 +116,7 @@ class Session:
         cfg.ckpt_dir = os.path.join(cfg.session_dir, 'checkpoint')
         if not os.path.exists(cfg.ckpt_dir) and not cfg.debug:
             logger.debug('Checkpoint files will be stored in %s' % cfg.ckpt_dir)
-            os.makedirs(cfg.ckpt_dir)
+            os.makedirs(cfg.ckpt_dir, exist_ok=True)
 
         # redirect logs to file
         cfg.log_dir = os.path.join(cfg.session_dir, 'log.txt')
@@ -128,7 +128,7 @@ class Session:
         cfg.tfb_dir = os.path.join(cfg.session_dir, 'tfboard')
         if not os.path.exists(cfg.tfb_dir) and not cfg.debug:
             logger.debug('TFboard files will be stored in %s if applicable' % cfg.tfb_dir)
-            os.makedirs(cfg.tfb_dir)
+            os.makedirs(cfg.tfb_dir, exist_ok=True)
 
         # store options at log directory
         if not cfg.debug:
