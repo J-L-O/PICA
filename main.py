@@ -131,6 +131,7 @@ def main():
     net = net.to(cfg.device)
 
     if int(os.environ["WORLD_SIZE"]) > 1:
+        net = torch.nn.SyncBatchNorm.convert_sync_batchnorm(net)
         net = torch.nn.parallel.DistributedDataParallel(net, device_ids=[cfg.local_rank], find_unused_parameters=True,
                                                         output_device=cfg.local_rank).cuda()
 
