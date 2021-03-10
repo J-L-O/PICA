@@ -61,8 +61,6 @@ def synchronize():
     dist.barrier()
 
 def main():
-    torch.autograd.set_detect_anomaly(True)
-
     logger.info('Start to declare training variable')
     if torch.cuda.is_available():
         cfg.device = torch.device("cuda")
@@ -122,7 +120,7 @@ def main():
     # move modules to target device
     if int(os.environ["WORLD_SIZE"]) > 1:
         dist.init_process_group(
-            backend="gloo", init_method="env://"
+            backend="nccl", init_method="env://"
         )
     print("world size: {}".format(os.environ["WORLD_SIZE"]))
     print("rank: {}".format(cfg.local_rank))
@@ -132,8 +130,8 @@ def main():
     net = net.to(cfg.device)
 
     if int(os.environ["WORLD_SIZE"]) > 1:
-        net = torch.nn.parallel.DistributedDataParallel(net, device_ids=[cfg.local_rank], find_unused_parameters=True,
-                                                        output_device=cfg.local_rank, broadcast_buffers=False).cuda()
+        net = torch.nn.parallel.DistributedDataParallel(net, device_ids=[cfg.local_rank],
+                                                        output_device=cfg.local_rank).cuda()
 
     # Only rank 0 needs a SummaryWriter
     if cfg.local_rank == 0:
