@@ -61,6 +61,7 @@ def synchronize():
     dist.barrier()
 
 def main():
+    torch.autograd.set_detect_anomaly(True)
     logger.info('Start to declare training variable')
     if torch.cuda.is_available():
         cfg.device = torch.device("cuda")
@@ -131,7 +132,7 @@ def main():
 
     if int(os.environ["WORLD_SIZE"]) > 1:
         net = torch.nn.SyncBatchNorm.convert_sync_batchnorm(net)
-        net = torch.nn.parallel.DistributedDataParallel(net, device_ids=[cfg.local_rank],
+        net = torch.nn.parallel.DistributedDataParallel(net, device_ids=[cfg.local_rank], find_unused_parameters=True,
                                                         output_device=cfg.local_rank).cuda()
 
     # Only rank 0 needs a SummaryWriter
