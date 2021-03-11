@@ -61,7 +61,6 @@ def synchronize():
     dist.barrier()
 
 def main():
-    torch.autograd.set_detect_anomaly(True)
     logger.info('Start to declare training variable')
     if torch.cuda.is_available():
         cfg.device = torch.device("cuda")
@@ -132,7 +131,7 @@ def main():
 
     if int(os.environ["WORLD_SIZE"]) > 1:
         net = torch.nn.SyncBatchNorm.convert_sync_batchnorm(net)
-        net = torch.nn.parallel.DistributedDataParallel(net, device_ids=[cfg.local_rank], find_unused_parameters=True,
+        net = torch.nn.parallel.DistributedDataParallel(net, device_ids=[cfg.local_rank],
                                                         output_device=cfg.local_rank).cuda()
 
     # Only rank 0 needs a SummaryWriter
@@ -197,6 +196,7 @@ def train_head(epoch, net, hidx, head, otrainset, ptrainset, optimizer, criterio
     # declare dataloader
     if world_size > 1:
         random_sampler = DistributedSampler(dataset=otrainset, num_replicas=world_size, rank=cfg.local_rank)
+        random_sampler.set_epoch(epoch)
         batch_sampler = RepeatSampler(random_sampler, cfg.batch_size, nrepeat=cfg.data_nrepeat)
     else:
         random_sampler = RandomSampler(otrainset)
