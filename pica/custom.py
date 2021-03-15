@@ -3,6 +3,8 @@
 # @Author  : Raymond Huang (jiabo.huang@qmul.ac.uk)
 # @Link    : github.com/Raymond-sci/PICA
 
+import torch
+import matplotlib.pyplot as plt
 import torch.nn as nn
 
 from lib import Config as cfg
@@ -103,10 +105,22 @@ class ResNet34Large(DefaultModel):
 
     def forward(self, x, hidx, target=7):
         if target is None or target > 7:
-            raise NotImplementedError('Target is expected to be smaller than 7')
+            raise NotImplementedError('Target is expected to be smaller than 8')
+
+        # for i in range(x.shape[0]):
+        #     plt.imshow(x[i].permute(1, 2, 0).cpu())
+        #     plt.savefig(f'{i}_color.png')
+        #     plt.close()
 
         if self.sobel is not None:
             x = self.sobel(x)
+
+            # combined_sobel = torch.sqrt(x[:, 0] ** 2 + x[:, 1] ** 2).cpu()
+            # for i in range(combined_sobel.shape[0]):
+            #     plt.imshow(combined_sobel[i], cmap='gray')
+            #     plt.savefig(f'{i}_sobel.png')
+            #     plt.close()
+
         layers = [self.layer1, self.layer2, self.layer3, self.layer4, self.layer5, self.avgpool, self.heads[hidx]]
         for layer in layers[:target]:
             x = layer(x)

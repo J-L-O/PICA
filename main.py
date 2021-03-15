@@ -79,7 +79,7 @@ def main():
     # test_transform is for evaluation
     test_transform = transforms.get(train=False)
     # reduced_transform is for original training data
-    reduced_transform = get_reduced_transform(cfg.tfm_resize, cfg.tfm_size, 
+    reduced_transform = get_reduced_transform(cfg.tfm_resize, cfg.tfm_size, cfg.tfm_blur,
                                                 cfg.tfm_means, cfg.tfm_stds)
     # get datasets
     # each head should have its own trainset

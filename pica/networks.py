@@ -106,7 +106,7 @@ class ResNet34(DefaultModel):
 
     def forward(self, x, hidx, target=7):
         if target is None or target > 7:
-            raise NotImplementedError('Target is expected to be smaller than 7')
+            raise NotImplementedError('Target is expected to be smaller than 8')
 
         if self.sobel is not None:
             x = self.sobel(x)

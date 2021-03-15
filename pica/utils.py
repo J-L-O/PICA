@@ -78,18 +78,24 @@ class RandomSampler(_RandomSampler_):
     def __iter__(self):
        return iter(self.indexes)
 
-def get_reduced_transform(resize, size, means, stds):
+def get_reduced_transform(resize, size, blur, means, stds):
     """Reduced transforms applied to original inputs
 
     Arguments:
         resize {int} -- resize before cropping
         size {int} -- expected size
+        blur {float} -- sigma of the gaussian blur
         means {list} -- pixel-wise means
         stds {list} -- pixel-wise stds
     """
     tfs = []
     tfs.append(transforms.Resize(size=resize))
     tfs.append(transforms.RandomCrop(size))
+
+    # gaussian blur
+    if blur is not None:
+        tfs.append(transforms.GaussianBlur(5, blur))
+
     tfs.append(transforms.ToTensor())
     tfs.append(transforms.Normalize(means, stds))
     return transforms.Compose(tfs)

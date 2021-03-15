@@ -32,9 +32,11 @@ class DefaultTransform(transforms.Compose):
                             help='channel-wise means for input sampels')
         cfg.add_argument('--tfm-stds', default=None, type=eval,
                             help='channel-wise stds for input sampels')
+        cfg.add_argument('--tfm-blur', default=None, type=eval,
+                         help='blur image using gaussian blur with this sigma')
 
     def __init__(self, train, means=None, stds=None,
-            size=None, resize=None, scale=None, ratio=None, 
+            size=None, resize=None, scale=None, ratio=None, blur=None,
             colorjitter=None, random_grayscale=None, random_hflip=None, tencrops=False):
         means = means if means is not None else cfg.tfm_means
         stds = stds if stds is not None else cfg.tfm_stds
@@ -42,6 +44,7 @@ class DefaultTransform(transforms.Compose):
         resize = resize if resize is not None else cfg.tfm_resize
         scale = scale if scale is not None else cfg.tfm_scale
         ratio = ratio if ratio is not None else cfg.tfm_ratio
+        blur = blur if blur is not None else cfg.tfm_blur
         colorjitter = colorjitter if colorjitter is not None else cfg.tfm_colorjitter
         random_grayscale = random_grayscale if random_grayscale is not None else cfg.tfm_random_grayscale
         random_hflip = random_hflip if random_hflip is not None else cfg.tfm_random_hflip
@@ -87,6 +90,11 @@ class DefaultTransform(transforms.Compose):
                 logger.debug('Testing sampels will be resized to [%s] and then '
                     'ten cropped to [%s]' % (resize, size))
 
+        # gaussian blur
+        if blur is not None:
+            logger.debug('Training samples will be blurred with sigma: '
+                         '[%s]' % str(blur))
+            self.transforms.append(transforms.GaussianBlur(5, blur))
 
         to_tensor = transforms.ToTensor()
         # to tensor and normalize
