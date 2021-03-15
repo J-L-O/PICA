@@ -12,6 +12,8 @@ from torch.utils.data import Sampler
 from torch.utils.data.sampler import RandomSampler as _RandomSampler_
 from functools import reduce
 
+from lib.utils.transforms.custom_transforms import AdaptiveGaussianThreshold
+
 
 class ConcatDataset(_ConcatDataset_):
     """Dataset as a concatenation of multiple datasets
@@ -78,7 +80,7 @@ class RandomSampler(_RandomSampler_):
     def __iter__(self):
        return iter(self.indexes)
 
-def get_reduced_transform(resize, size, blur, means, stds):
+def get_reduced_transform(resize, size, blur, means, stds, adaptive_thresholding):
     """Reduced transforms applied to original inputs
 
     Arguments:
@@ -96,6 +98,11 @@ def get_reduced_transform(resize, size, blur, means, stds):
     if blur is not None:
         tfs.append(transforms.GaussianBlur(5, blur))
 
+    if adaptive_thresholding:
+        tfs.append(AdaptiveGaussianThreshold())
+
     tfs.append(transforms.ToTensor())
-    tfs.append(transforms.Normalize(means, stds))
+
+    if means is not None and stds is not None:
+        tfs.append(transforms.Normalize(means, stds))
     return transforms.Compose(tfs)

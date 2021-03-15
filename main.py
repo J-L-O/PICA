@@ -80,7 +80,7 @@ def main():
     test_transform = transforms.get(train=False)
     # reduced_transform is for original training data
     reduced_transform = get_reduced_transform(cfg.tfm_resize, cfg.tfm_size, cfg.tfm_blur,
-                                                cfg.tfm_means, cfg.tfm_stds)
+                                                cfg.tfm_means, cfg.tfm_stds, cfg.tfm_adaptive_thresholding)
     # get datasets
     # each head should have its own trainset
     train_splits = dict(cifar100=[['train', 'test']], impact_kb=[['train', 'test']],

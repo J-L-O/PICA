@@ -6,6 +6,7 @@
 import torch
 import torchvision.transforms as transforms
 
+from .custom_transforms import AdaptiveGaussianThreshold
 from ..loggers import STDLogger as logger
 from ...core.config import Config as cfg
 
@@ -34,9 +35,11 @@ class DefaultTransform(transforms.Compose):
                             help='channel-wise stds for input sampels')
         cfg.add_argument('--tfm-blur', default=None, type=eval,
                          help='blur image using gaussian blur with this sigma')
+        cfg.add_argument('--tfm-adaptive-thresholding', default=False, type=eval,
+                         help='conversion to black-and-white using adaptive thresholding')
 
     def __init__(self, train, means=None, stds=None,
-            size=None, resize=None, scale=None, ratio=None, blur=None,
+            size=None, resize=None, scale=None, ratio=None, blur=None, adaptive_thresholding=None,
             colorjitter=None, random_grayscale=None, random_hflip=None, tencrops=False):
         means = means if means is not None else cfg.tfm_means
         stds = stds if stds is not None else cfg.tfm_stds
@@ -48,6 +51,7 @@ class DefaultTransform(transforms.Compose):
         colorjitter = colorjitter if colorjitter is not None else cfg.tfm_colorjitter
         random_grayscale = random_grayscale if random_grayscale is not None else cfg.tfm_random_grayscale
         random_hflip = random_hflip if random_hflip is not None else cfg.tfm_random_hflip
+        adaptive_thresholding = adaptive_thresholding if adaptive_thresholding is not None else cfg.tfm_adaptive_thresholding
 
         self.transforms = []
         if train:
@@ -92,9 +96,13 @@ class DefaultTransform(transforms.Compose):
 
         # gaussian blur
         if blur is not None:
-            logger.debug('Training samples will be blurred with sigma: '
+            logger.debug('Samples will be blurred with sigma: '
                          '[%s]' % str(blur))
-            self.transforms.append(transforms.GaussianBlur(5, blur))
+            self.transforms.append(transforms.GaussianBlur(7, blur))
+
+        if adaptive_thresholding:
+            logger.debug('Samples will be converted to B/W with adaptive thresholding')
+            self.transforms.append(AdaptiveGaussianThreshold())
 
         to_tensor = transforms.ToTensor()
         # to tensor and normalize
