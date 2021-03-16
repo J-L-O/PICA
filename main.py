@@ -275,8 +275,13 @@ def evaluate(net, loader, writer, epoch):
             end = min(end, len(loader.dataset))
             labels[start:end] = targets.cpu().numpy()
             predicts[start:end] = logits.max(1)[1].cpu().numpy()
-            intermediates[start:end] = net(batch, -1, 6).cpu().numpy()
-            images[start:end] = torch.nn.functional.interpolate(batch, size=(64, 64), mode='bicubic', align_corners=False).cpu().numpy()
+
+            if epoch % cfg.embedding_freq == 0:
+                intermediates[start:end] = net(batch, -1, 6).cpu().numpy()
+                if not cfg.tfm_adaptive_thresholding:
+                    for i in range(3):
+                        batch[:, i] = (batch[:, i] * cfg.tfm_stds[i]) + cfg.tfm_means[i]
+                images[start:end] = torch.nn.functional.interpolate(batch, size=(64, 64), mode='bicubic', align_corners=False).cpu().numpy()
 
     # TODO: Gather labels and predicts
     # compute accuracy
