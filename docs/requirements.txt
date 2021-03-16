@@ -7,3 +7,4 @@ pyyaml
 prettytable
 easydict
 matplotlib
+opencv-python
