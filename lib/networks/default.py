@@ -49,6 +49,16 @@ class DefaultModel(nn.Module):
             p.requires_grad = False
         return layers
 
+    def _make_grayscale_(self):
+        grayscale = nn.Conv2d(3, 1, kernel_size=1, stride=1, padding=0)
+        grayscale.weight.data.fill_(1.0 / 3.0)
+        grayscale.bias.data.zero_()
+
+        layers = nn.Sequential(grayscale)
+        for p in layers.parameters():
+            p.requires_grad = False
+        return layers
+
     def load_state_dict(self, state_dict):
         # ignore data parallel
         state_dict = {key.replace('module.', ''):val for key,val in state_dict.items()}

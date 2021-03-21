@@ -61,16 +61,25 @@ class ResNet34Large(DefaultModel):
         cfg.add_argument('--net-heads', nargs='*', type=int,
                         help='net heads')
 
-    def __init__(self, cin, cout, sobel, net_heads=None):
+    def __init__(self, cin, cout, sobel, grayscale, net_heads=None):
         net_heads = net_heads if net_heads is not None else cfg.net_heads
         logger.debug('Backbone will be created wit the following heads: %s' % net_heads)
         # do init
         super(ResNet34Large, self).__init__()
         # build sobel
         self.sobel = self._make_sobel_() if sobel else None
+        self.grayscale = self._make_grayscale_() if grayscale else None
         # build trunk net
         self.inplanes = 64
-        self.layer1 = nn.Sequential(nn.Conv2d(2 if sobel else cin, 64,
+
+        if sobel:
+            input_channels = 2
+        elif grayscale:
+            input_channels = 1
+        else:
+            input_channels = cin
+
+        self.layer1 = nn.Sequential(nn.Conv2d(input_channels, 64,
                     kernel_size=7, stride=2, padding=3, bias=False),
                     nn.BatchNorm2d(64, track_running_stats=True),
                     nn.ReLU(inplace=True),
@@ -114,6 +123,8 @@ class ResNet34Large(DefaultModel):
 
         if self.sobel is not None:
             x = self.sobel(x)
+        elif self.grayscale is not None:
+            x = self.grayscale(x)
 
             # combined_sobel = torch.sqrt(x[:, 0] ** 2 + x[:, 1] ** 2).cpu()
             # for i in range(combined_sobel.shape[0]):

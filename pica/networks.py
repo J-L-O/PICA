@@ -3,6 +3,8 @@
 # @Author  : Raymond Huang (jiabo.huang@qmul.ac.uk)
 # @Link    : github.com/Raymond-sci/PICA
 
+import torch
+import matplotlib.pyplot as plt
 import torch.nn as nn
 
 from lib import Config as cfg
@@ -61,7 +63,7 @@ class ResNet34(DefaultModel):
         cfg.add_argument('--net-avgpool-size', default=3, type=int, choices=[3, 5, 7],
                         help='Avgpool kernel size determined by inputs size')
 
-    def __init__(self, cin, cout, sobel, net_heads=None, pool_size=None):
+    def __init__(self, cin, cout, sobel, grayscale, net_heads=None, pool_size=None):
         net_heads = net_heads if net_heads is not None else cfg.net_heads
         pool_size = pool_size if pool_size is not None else cfg.net_avgpool_size
         logger.debug('Backbone will be created wit the following heads: %s' % net_heads)
@@ -69,9 +71,18 @@ class ResNet34(DefaultModel):
         super(ResNet34, self).__init__()
         # build sobel
         self.sobel = self._make_sobel_() if sobel else None
+        self.grayscale = self._make_grayscale_() if grayscale else None
         # build trunk net
         self.inplanes = 64
-        self.layer1 = nn.Sequential(nn.Conv2d(2 if sobel else cin, 64, 
+
+        if sobel:
+            input_channels = 2
+        elif grayscale:
+            input_channels = 1
+        else:
+            input_channels = cin
+
+        self.layer1 = nn.Sequential(nn.Conv2d(input_channels, 64,
                     kernel_size=3, stride=1, padding=1, bias=False),
                     nn.BatchNorm2d(64, track_running_stats=True),
                     nn.ReLU(inplace=True),
@@ -108,8 +119,22 @@ class ResNet34(DefaultModel):
         if target is None or target > 7:
             raise NotImplementedError('Target is expected to be smaller than 8')
 
+        # for i in range(x.shape[0]):
+        #     plt.imshow(x[i].permute(1, 2, 0).cpu())
+        #     plt.savefig(f'{i}_color.png')
+        #     plt.close()
+
         if self.sobel is not None:
             x = self.sobel(x)
+        elif self.grayscale is not None:
+            x = self.grayscale(x)
+
+            # combined_sobel = torch.sqrt(x[:, 0] ** 2 + x[:, 1] ** 2).cpu()
+            # for i in range(combined_sobel.shape[0]):
+            #     plt.imshow(combined_sobel[i], cmap='gray')
+            #     plt.savefig(f'{i}_sobel.png')
+            #     plt.close()
+
         layers = [self.layer1, self.layer2, self.layer3, self.layer4, self.layer5, self.avgpool, self.heads[hidx]]
         for layer in layers[:target]:
             x = layer(x)
