@@ -18,3 +18,4 @@ tfm_resize: 240
 
 # smaller batch size for lower memory consumption
 batch_size: 32
+pica_target: (0.460, 0.230, 0.264, 0.046)

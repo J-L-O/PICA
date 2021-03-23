@@ -45,6 +45,9 @@ def require_args():
                              'mini-batch should be repeated')
     cfg.add_argument('--pica-lamda', default=2.0, type=float,
                         help='weight of negative entropy regularisation')
+    cfg.add_argument('--pica-target', default=None, type=eval,
+                     help='the target class distribution')
+
 
 def synchronize():
     """
@@ -105,7 +108,7 @@ def main():
 
     logger.info('Start to build model')
     net = networks.get()
-    criterion = PUILoss(cfg.pica_lamda)
+    criterion = PUILoss(cfg.pica_lamda, cfg.pica_target)
     optimizer = optimizers.get(params=[val for _, val in net.trainable_parameters().items()])
     lr_handler = lr_policy.get()
 
