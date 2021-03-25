@@ -56,7 +56,7 @@ class PUILoss(nn.Module):
         # else:
         #     loss_ne = self.cce(p, self.target)
 
-        return loss_ce + loss_iid_p - loss_iid_o  # + self.lamda * loss_ne
+        return loss_ce + loss_iid_p  # + self.lamda * loss_ne
 
 
 def IIDLoss(x_out, x_tf_out, lamb=1.0, EPS=sys.float_info.epsilon):
