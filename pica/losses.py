@@ -21,10 +21,12 @@ class ContinuousCrossEntropyLoss(nn.Module):
 
 class PUILoss(nn.Module):
 
-    def __init__(self, lamda=2.0, target=None):
+    def __init__(self, lamda=2.0, target=None, iic=False):
         super(PUILoss, self).__init__()
         self.xentropy = nn.CrossEntropyLoss()
         self.lamda = lamda
+        self.target = target
+        self.iic = iic
 
         if target is not None:
             self.target = torch.FloatTensor(target).to(cfg.device)
@@ -46,17 +48,21 @@ class PUILoss(nn.Module):
         pui = torch.mm(F.normalize(x.t(), p=2, dim=1), F.normalize(y, p=2, dim=0))
         loss_ce = self.xentropy(pui, torch.arange(pui.shape[0]).to(cfg.device))
 
-        loss_iid_p = IIDLoss(x, y)
-
         # balance regularisation
-        # p = x.sum(0).view(-1)
-        # p /= p.sum()
-        # if self.target is None or x.shape[1] != len(self.target):
-        #     loss_ne = math.log(p.shape[0]) + (p * p.log()).sum()
-        # else:
-        #     loss_ne = self.cce(p, self.target)
+        p = x.sum(0).view(-1)
+        p /= p.sum()
+        if self.target is None or x.shape[1] != len(self.target):
+            loss_ne = math.log(p.shape[0]) + (p * p.log()).sum()
+        else:
+            loss_ne = self.cce(p, self.target)
 
-        return loss_ce + loss_iid_p  # + self.lamda * loss_ne
+        loss = loss_ce + self.lamda * loss_ne
+
+        if self.iic:
+            loss_iic = IIDLoss(x, y)
+            loss = loss + loss_iic
+
+        return loss
 
 
 def IIDLoss(x_out, x_tf_out, lamb=1.0, EPS=sys.float_info.epsilon):

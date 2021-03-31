@@ -47,6 +47,8 @@ def require_args():
                         help='weight of negative entropy regularisation')
     cfg.add_argument('--pica-target', default=None, type=eval,
                      help='the target class distribution')
+    cfg.add_argument('--pica-iic', default=False, type=eval,
+                     help='whether to use additional iic loss')
 
 
 def synchronize():
@@ -108,7 +110,7 @@ def main():
 
     logger.info('Start to build model')
     net = networks.get()
-    criterion = PUILoss(cfg.pica_lamda, cfg.pica_target)
+    criterion = PUILoss(cfg.pica_lamda, cfg.pica_target, cfg.pica_iic)
     optimizer = optimizers.get(params=[val for _, val in net.trainable_parameters().items()])
     lr_handler = lr_policy.get()
 
