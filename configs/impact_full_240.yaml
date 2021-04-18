@@ -5,7 +5,7 @@
 # args for network
 network: resnet34large
 net_heads:
-  - 12
+#  - 12
   - 5
 
 # args for dataset and dataloader
