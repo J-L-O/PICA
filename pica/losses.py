@@ -12,36 +12,11 @@ import torch.nn.functional as F
 
 from lib import Config as cfg
 
-EPS = 1e-8
-
 
 class ContinuousCrossEntropyLoss(nn.Module):
 
     def forward(self, x, y):
         return torch.sum(-y * x.log())
-
-
-def xentropy(x, target, input_as_probabilities):
-    """
-    Helper function to compute the cross entropy over the batch
-
-    input: batch w/ shape [b, num_classes], target distribution w/ shape [num_classes]
-    output: entropy value [is ideally -log(num_classes)]
-    """
-
-    if not input_as_probabilities:
-        x = F.softmax(x, dim=1)
-
-    x_ = torch.clamp(x, min=EPS)
-    b = target * torch.log(x_)
-
-    # We want to minimize this not maximize it, hence the sign
-    if len(b.size()) == 2:  # Sample-wise entropy
-        return b.sum(dim=1).mean()
-    elif len(b.size()) == 1:  # Distribution-wise entropy
-        return b.sum()
-    else:
-        raise ValueError('Input tensor is %d-Dimensional' % (len(b.size())))
 
 
 class PUILoss(nn.Module):
@@ -55,7 +30,7 @@ class PUILoss(nn.Module):
 
         if target is not None:
             self.target = torch.FloatTensor(target).to(cfg.device)
-            # self.cce = ContinuousCrossEntropyLoss()
+            self.cce = ContinuousCrossEntropyLoss()
 
     def forward(self, x, y):
         """Partition Uncertainty Index
@@ -79,8 +54,7 @@ class PUILoss(nn.Module):
         if self.target is None or x.shape[1] != len(self.target):
             loss_ne = math.log(p.shape[0]) + (p * p.log()).sum()
         else:
-            loss_ne = xentropy(p, self.target, True)
-            # loss_ne = self.cce(p, self.target)
+            loss_ne = self.cce(p, self.target)
 
         loss = loss_ce + self.lamda * loss_ne
 
