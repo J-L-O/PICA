@@ -21,3 +21,5 @@ tfm_resize: 240
 batch_size: 64
 num_workers: 0
 max_epochs: 200
+
+session: with_sobel
