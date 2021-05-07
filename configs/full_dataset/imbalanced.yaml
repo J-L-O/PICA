@@ -19,7 +19,7 @@ tfm_resize: 240
 
 # smaller batch size for lower memory consumption
 batch_size: 64
-num_workers: 0
+num_workers: 4
 max_epochs: 200
 
 session: imbalanaced
