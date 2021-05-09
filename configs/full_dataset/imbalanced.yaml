@@ -22,4 +22,4 @@ batch_size: 64
 num_workers: 4
 max_epochs: 200
 
-session: imbalanaced
+session: imbalanced
