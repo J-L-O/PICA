@@ -24,4 +24,4 @@ max_epochs: 200
 
 pica_iic: True
 
-session: balanced
+session: balanced_with_iic
