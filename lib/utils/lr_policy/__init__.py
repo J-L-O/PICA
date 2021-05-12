@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # @Author  : Raymond Huang (jiabo.huang@qmul.ac.uk)
 # @Link    : github.com/Raymond-sci/PICA
-
+from .cosine import Cosine
 from .fixed import Fixed
 from .multistep import MultiStep
 from .step import Step
@@ -14,6 +14,7 @@ cfg.register_module(_MODULE_, __name__)
 cfg.register_class(_MODULE_, 'fixed', Fixed)
 cfg.register_class(_MODULE_, 'multistep', MultiStep)
 cfg.register_class(_MODULE_, 'step', Step)
+cfg.register_class(_MODULE_, 'cosine', Cosine)
 
 def require_args():
 
