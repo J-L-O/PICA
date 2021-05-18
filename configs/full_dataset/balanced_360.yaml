@@ -18,7 +18,7 @@ tfm_size: (320, 320)
 tfm_resize: 360
 
 # smaller batch size for lower memory consumption
-batch_size: 16
+batch_size: 32
 num_workers: 4
 max_epochs: 200
 
