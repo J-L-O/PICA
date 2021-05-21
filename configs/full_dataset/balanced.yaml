@@ -3,7 +3,7 @@
 ######################
 
 # args for network
-network: resnet34large
+network: resnet34standard
 net_sobel: True
 net_heads:
   - 20

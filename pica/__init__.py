@@ -7,4 +7,5 @@ from .networks import *
 from .datasets import *
 from .losses import *
 from .utils import *
-from .custom import *
+from .resnet_standard import *
+from .resnet_large import *

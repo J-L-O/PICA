@@ -88,6 +88,7 @@ class ResNet34Large(DefaultModel):
         self.layer3 = self._make_layer(BasicBlock, 128, 4, stride=2)
         self.layer4 = self._make_layer(BasicBlock, 256, 6, stride=2)
         self.layer5 = self._make_layer(BasicBlock, 512, 3, stride=2)
+        self.layer6 = self._make_layer(BasicBlock, 512, 3, stride=2)
         self.avgpool = nn.Sequential(nn.AdaptiveAvgPool2d(1), Flatten())
         heads = [nn.Sequential(nn.Linear(512 * BasicBlock.expansion, head),
             nn.Softmax(dim=1)) for head in net_heads]
@@ -132,7 +133,7 @@ class ResNet34Large(DefaultModel):
             #     plt.savefig(f'{i}_sobel.png')
             #     plt.close()
 
-        layers = [self.layer1, self.layer2, self.layer3, self.layer4, self.layer5, self.avgpool, self.heads[hidx]]
+        layers = [self.layer1, self.layer2, self.layer3, self.layer4, self.layer5, self.layer6, self.avgpool, self.heads[hidx]]
         for layer in layers[:target]:
             x = layer(x)
         return x
