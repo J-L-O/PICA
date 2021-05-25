@@ -282,7 +282,7 @@ def evaluate(net, loader, writer, epoch):
             predicts[start:end] = logits.max(1)[1].cpu().numpy()
 
             if epoch % cfg.embedding_freq == 0:
-                intermediates[start:end] = net(batch, -1, 6).cpu().numpy()
+                intermediates[start:end] = net(batch, -1, True).cpu().numpy()
                 if not cfg.tfm_adaptive_thresholding:
                     for i in range(3):
                         batch[:, i] = (batch[:, i] * cfg.tfm_stds[i]) + cfg.tfm_means[i]
