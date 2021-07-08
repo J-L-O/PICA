@@ -147,9 +147,9 @@ class STL10(datasets.STL10):
 register('stl10', STL10)
 
 
-class IMPACT_KB(torchvision.datasets.ImageFolder):
+class ImageFolderWrapper(torchvision.datasets.ImageFolder):
     def __init__(self, root, split, transform=None, target_transform=None):
         super().__init__(os.path.join(root, split), transform, target_transform)
 
 
-register('impact_kb', IMPACT_KB)
+register('image_folder_wrapper', ImageFolderWrapper)
