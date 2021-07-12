@@ -6,7 +6,6 @@
 import torch
 import torch.nn as nn
 import torchvision.transforms as transforms
-from torch._six import int_classes as _int_classes
 from torch.utils.data.dataset import ConcatDataset as _ConcatDataset_
 from torch.utils.data import Sampler
 from torch.utils.data.sampler import RandomSampler as _RandomSampler_
@@ -36,7 +35,7 @@ class RepeatSampler(Sampler):
             raise ValueError("sampler should be an instance of "
                              "torch.utils.data.Sampler, but got sampler={}"
                              .format(sampler))
-        if not isinstance(batch_size, _int_classes) or isinstance(batch_size, bool) or \
+        if not isinstance(batch_size, int) or isinstance(batch_size, bool) or \
                 batch_size <= 0:
             raise ValueError("batch_size should be a positive integeral value, "
                              "but got batch_size={}".format(batch_size))
